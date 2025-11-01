@@ -39,11 +39,11 @@ def setup_vue_desk_page_starter(page_doc, app_name):
 
 def setup_react_desk_page_starter(page_doc, app_name):
 	# check if package.json exists in app directory
-	# if not, create package.json using npm init --yes
+	# if not, create package.json using yarn init
 	app_path = Path("../apps") / app_name
 	package_json_path = app_path / "package.json"
 	if not package_json_path.exists():
-		subprocess.run(["npm", "init", "--yes"], cwd=app_path)
+		subprocess.run(["yarn", "init", "-y"], cwd=app_path)
 
 	# install react and react-dom
 	click.echo("Installing react and react-dom...")

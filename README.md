@@ -1,6 +1,8 @@
 # Doppio
 
-A Frappe App to setup and manage single page applications and custom desk pages (using Vue 3 or React) on your custom Frappe App.
+A modern Frappe App to setup and manage single page applications and custom desk pages using Vue 3 or React on your custom Frappe App.
+
+**✨ Now with Vue 3 Composition API, Pinia state management, and modern ES2020+ support!**
 
 ## Installation
 
@@ -18,11 +20,16 @@ that will ease the process of attaching a SPA to your Frappe Application.
 To set up a new Single Page Application, you can run the following command in your bench directory:
 
 ```bash
-bench add-spa --app <app-name> [--tailwindcss] [--typescript]
+bench add-spa --app <app-name> [--tailwindcss] [--typescript] [--pinia]
 
 # or just, and answer the prompts
 bench add-spa
 ```
+
+**Options:**
+- `--tailwindcss`: Adds TailwindCSS styling framework
+- `--typescript`: Uses TypeScript instead of JavaScript
+- `--pinia`: (Vue only) Adds Pinia state management (recommended for larger apps)
 
 You will be prompted to enter a name for your single page application, this will be the name of the directory and the URI path at which the application will be served. For instance, if you enter `dashboard` (default), then a folder named `dashboard` will be created inside your app's root directory and the application will be served at `/dashboard`.
 
@@ -36,29 +43,37 @@ The above command will do the following things:
 
 ### For Vue 3
 
-1. Scaffold a new Vue 3 starter application (using [Vite](https://vitejs.dev/))
+1. Scaffold a new Vue 3 starter application (using [Vite 5](https://vitejs.dev/))
 
-2. Add and configure Vue router
+2. Add and configure Vue Router 4 with modern patterns
 
-3. Link utility and controller files to make the connection with Frappe backend a breeze!
+3. **Uses Vue 3 Composition API with `<script setup>` syntax** for cleaner, more maintainable code
 
-4. Configure Vite's proxy options (which will be helpful in development), check the `proxyOptions.js` file to see to what ports the Vite dev server proxies the requests (you frappe bench server).
+4. Link utility and controller files to make the connection with Frappe backend a breeze!
 
-5. Optionally, installs and set up tailwindCSS.
+5. Configure Vite's proxy options (which will be helpful in development), check the `proxyOptions.js` file to see to what ports the Vite dev server proxies the requests (to your Frappe bench server).
 
-6. Update the `website_route_rules` hook (in `hooks.py` of your app) to handle the routing of this SPA.
+6. Optionally, installs and sets up:
+   - **TailwindCSS** for modern utility-first styling
+   - **Pinia** state management (official Vue store, successor to Vuex)
+
+7. Update the `website_route_rules` hook (in `hooks.py` of your app) to handle the routing of this SPA.
+
+8. **Builds to ES2020 target** for optimal modern browser performance
 
 ### For React
 
-1. Scaffold a new React starter application (using [Vite](https://vitejs.dev/))
+1. Scaffold a new React 18+ starter application (using [Vite 5](https://vitejs.dev/))
 
 2. Add and configure [frappe-react-sdk](https://github.com/nikkothari22/frappe-react-sdk) to make the connection with Frappe backend a breeze!
 
-3. Configure Vite's proxy options (which will be helpful in development), check the `proxyOptions.js` file to see to what ports the Vite dev server proxies the requests (you frappe bench server).
+3. Configure Vite's proxy options (which will be helpful in development), check the `proxyOptions.js` file to see to what ports the Vite dev server proxies the requests (to your Frappe bench server).
 
-4. Optionally, installs and set up tailwindCSS.
+4. Optionally, installs and sets up TailwindCSS for modern styling.
 
 5. Update the `website_route_rules` hook (in `hooks.py` of your app) to handle the routing of this SPA.
+
+6. **Builds to ES2020 target** for optimal modern browser performance
 
 Once the setup is complete, you can `cd` into the SPA directory of your app (e.g. `dashboard`) and run:
 
@@ -67,6 +82,33 @@ yarn dev
 ```
 
 This will start a development server at port `8080` by default (any other port if this port's already in use). You can view the running application at: `<site>:8080`.
+
+## Modern Features (2025)
+
+Doppio has been updated to use the latest standards and best practices:
+
+### Vue 3 Enhancements
+- ✅ **Composition API with `<script setup>`** - Modern, concise component syntax
+- ✅ **Pinia State Management** - Official Vue store (optional, via `--pinia` flag)
+- ✅ **Vue Router 4** - Latest routing with improved TypeScript support
+- ✅ **Reactive Auth System** - Built-in authentication with reactive state
+
+### React Enhancements
+- ✅ **frappe-react-sdk Integration** - Type-safe Frappe backend connection
+- ✅ **React 18+ Support** - Concurrent rendering and modern hooks
+- ✅ **Modern JSX** - Clean component patterns
+
+### Build & Development
+- ✅ **Vite 5** - Lightning-fast builds and HMR
+- ✅ **ES2020 Target** - Modern JavaScript features, smaller bundles
+- ✅ **Yarn Package Manager** - Fast, reliable dependency management
+- ✅ **Socket.io 4.8+** - Latest real-time communication
+- ✅ **TailwindCSS Support** - Modern utility-first CSS framework
+
+### Code Quality
+- ✅ **TypeScript Support** - Optional type safety
+- ✅ **Modern Auth Controller** - Improved cookie parsing and error handling
+- ✅ **Clean Code Patterns** - Following 2025 best practices
 
 ## Adding FrappeUI
 
@@ -104,6 +146,42 @@ If you already have a package.json file with scripts in your app's root director
 "dev": "cd <your-spa-folder> && yarn dev",
 "build": "cd <your-spa-folder> && yarn build"
 ```
+
+## Example: Using Pinia Store (Vue)
+
+If you generated your SPA with the `--pinia` flag, you can use state management like this:
+
+```vue
+<script setup>
+import { useAppStore } from './stores/app';
+
+const store = useAppStore();
+
+// Access state
+console.log(store.count);
+
+// Call actions
+store.increment();
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ store.count }}</p>
+    <p>Double: {{ store.doubleCount }}</p>
+    <button @click="store.increment()">Increment</button>
+  </div>
+</template>
+```
+
+## Python Packaging
+
+Doppio now uses modern Python packaging standards:
+- ✅ **pyproject.toml** (PEP 621) - Modern Python project configuration
+- ✅ **Compatible with pip, setuptools, and build tools**
+
+## Contributing
+
+Contributions are welcome! This project follows modern JavaScript and Python standards as of 2025.
 
 ### License
 

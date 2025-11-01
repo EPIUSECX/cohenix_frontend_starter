@@ -25,7 +25,7 @@ def add_frappe_ui(name, app):
 
 def add_frappe_ui_starter(name, app):
     subprocess.run(
-        ["npx", "degit", "NagariaHussain/doppio_frappeui_starter", name],
+        ["yarn", "dlx", "degit", "NagariaHussain/doppio_frappeui_starter", name],
         cwd=Path("../apps", app),
     )
     subprocess.run(["yarn"], cwd=Path("../apps", app, name))

@@ -2,7 +2,20 @@ import click
 import subprocess
 
 from pathlib import Path
-from .boilerplates import *
+from .boilerplates import (
+	APP_VUE_BOILERPLATE,
+	HOME_VUE_BOILERPLATE,
+	LOGIN_VUE_BOILERPLATE,
+	VUE_VITE_CONFIG_BOILERPLATE,
+	PROXY_OPTIONS_BOILERPLATE,
+	MAIN_JS_BOILERPLATE,
+	MAIN_JS_WITH_PINIA_BOILERPLATE,
+	PINIA_STORE_BOILERPLATE,
+	ROUTER_INDEX_BOILERPLATE,
+	AUTH_ROUTES_BOILERPLATE,
+	REACT_VITE_CONFIG_BOILERPLATE,
+	APP_REACT_BOILERPLATE,
+)
 from .utils import (
 	create_file,
 	add_commands_to_root_package_json,
@@ -11,7 +24,7 @@ from .utils import (
 
 
 class SPAGenerator:
-	def __init__(self, framework, spa_name, app, add_tailwindcss, typescript):
+	def __init__(self, framework, spa_name, app, add_tailwindcss, typescript, add_pinia=False):
 		"""Initialize a new SPAGenerator instance"""
 		self.framework = framework
 		self.app = app
@@ -20,6 +33,7 @@ class SPAGenerator:
 		self.spa_path: Path = self.app_path / self.spa_name
 		self.add_tailwindcss = add_tailwindcss
 		self.use_typescript = typescript
+		self.add_pinia = add_pinia and framework == "vue"  # Only for Vue
 
 		self.validate_spa_name()
 
@@ -37,6 +51,9 @@ class SPAGenerator:
 			self.setup_vue_vite_config()
 			self.setup_vue_router()
 			self.create_vue_files()
+			
+			if self.add_pinia:
+				self.setup_pinia()
 
 		elif self.framework == "react":
 			self.initialize_react_vite_project()
@@ -54,16 +71,15 @@ class SPAGenerator:
 
 		add_routing_rule_to_hooks(self.app, self.spa_name)
 
-		click.echo(f"Run: cd {self.spa_path.absolute().resolve()} && npm run dev")
+		click.echo(f"Run: cd {self.spa_path.absolute().resolve()} && yarn dev")
 		click.echo("to start the development server and visit: http://<site>:8080")
 
 	def setup_tailwindcss(self):
-		# TODO: Convert to yarn command
-		# npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
+		# Install tailwindcss and dependencies with yarn
 		subprocess.run(
 			[
-				"npm",
-				"install",
+				"yarn",
+				"add",
 				"-D",
 				"tailwindcss@latest",
 				"postcss@latest",
@@ -72,8 +88,8 @@ class SPAGenerator:
 			cwd=self.spa_path,
 		)
 
-		# npx tailwindcss init -p
-		subprocess.run(["npx", "tailwindcss", "init", "-p"], cwd=self.spa_path)
+		# Initialize tailwindcss
+		subprocess.run(["yarn", "dlx", "tailwindcss", "init", "-p"], cwd=self.spa_path)
 
 		# Create an index.css file
 		index_css_path: Path = self.spa_path / "src/index.css"
@@ -142,10 +158,10 @@ class SPAGenerator:
 			)
 
 		# Install router and other npm packages
-		# yarn add vue-router@4 socket.io-client@4.5.1
+		# yarn add vue-router@4 socket.io-client@4.8.1
 		print("Installing dependencies...")
 		subprocess.run(
-			["yarn", "add", "vue-router@^4", "socket.io-client@^4.5.1"], cwd=self.spa_path
+			["yarn", "add", "vue-router@^4", "socket.io-client@^4.8.1"], cwd=self.spa_path
 		)
 
 	def link_controller_files(self):
@@ -159,7 +175,11 @@ class SPAGenerator:
 
 		if main_js.exists():
 			with main_js.open("w") as f:
-				boilerplate = MAIN_JS_BOILERPLATE
+				# Choose appropriate boilerplate based on Pinia option
+				if self.add_pinia:
+					boilerplate = MAIN_JS_WITH_PINIA_BOILERPLATE
+				else:
+					boilerplate = MAIN_JS_BOILERPLATE
 
 				# Add css import
 				if self.add_tailwindcss:
@@ -241,3 +261,25 @@ class SPAGenerator:
 	def create_react_files(self):
 		app_react = self.spa_path / ("src/App.tsx" if self.use_typescript else "src/App.jsx")
 		create_file(app_react, APP_REACT_BOILERPLATE)
+
+	def setup_pinia(self):
+		"""Setup Pinia state management for Vue"""
+		print("Setting up Pinia state management...")
+		
+		# Install Pinia
+		subprocess.run(
+			["yarn", "add", "pinia"],
+			cwd=self.spa_path
+		)
+		
+		# Create stores directory
+		stores_dir: Path = self.spa_path / "src/stores"
+		if not stores_dir.exists():
+			stores_dir.mkdir()
+		
+		# Create example store
+		store_file = stores_dir / "app.js"
+		create_file(store_file, PINIA_STORE_BOILERPLATE)
+		
+		click.echo("✅ Pinia state management configured!")
+		click.echo("   Import and use stores: import { useAppStore } from './stores/app';")

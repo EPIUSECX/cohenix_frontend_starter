@@ -1,5 +1,22 @@
 import call from './call';
 
+/**
+ * Parse cookies from document.cookie string
+ * @returns {Object} Object with cookie key-value pairs
+ */
+function parseCookies() {
+	return Object.fromEntries(
+		document.cookie
+			.split('; ')
+			.filter(Boolean)
+			.map((cookie) => {
+				const [key, ...valueParts] = cookie.split('=');
+				const value = valueParts.join('='); // Handle = in cookie value
+				return [key, decodeURIComponent(value)];
+			})
+	);
+}
+
 export default class Auth {
 	constructor() {
 		this.isLoggedIn = false;
@@ -7,13 +24,7 @@ export default class Auth {
 		this.user_image = null;
 		this.cookie = null;
 
-		this.cookie = Object.fromEntries(
-			document.cookie
-				.split('; ')
-				.map((part) => part.split('='))
-				.map((d) => [d[0], decodeURIComponent(d[1])])
-		);
-
+		this.cookie = parseCookies();
 		this.isLoggedIn = this.cookie.user_id && this.cookie.user_id !== 'Guest';
 	}
 

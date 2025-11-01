@@ -1,43 +1,62 @@
-APP_VUE_BOILERPLATE = """<template>
+APP_VUE_BOILERPLATE = """<script setup>
+import { inject } from 'vue';
+
+const $auth = inject('$auth');
+</script>
+
+<template>
 	<div>
 		<button v-if="$auth.isLoggedIn" @click="$auth.logout()">Logout</button>
 		<router-view />
 	</div>
 </template>
-
-
-<script>
-export default {
-	inject: ['$auth']
-};
-</script>
 """
 
-HOME_VUE_BOILERPLATE = """<template>
+HOME_VUE_BOILERPLATE = """<script setup>
+import { inject } from 'vue';
+
+const $resources = inject('$resources');
+</script>
+
+<template>
   <div>
 	<h1>Home Page</h1>
 	<!-- Fetch the resource on click -->
 	<button @click="$resources.ping.fetch()">Ping</button>
   </div>
 </template>
-
-<script>
-export default {
-  resources: {
-	ping() {
-	  return {
-		method: "frappe.ping", // Method to call on backend
-		onSuccess(d) {
-		  alert(d);
-		},
-	  };
-	},
-  },
-};
-</script>
 """
 
-LOGIN_VUE_BOILERPLATE = """<template>
+LOGIN_VUE_BOILERPLATE = """<script setup>
+import { ref, inject, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+
+const email = ref('');
+const password = ref('');
+const redirect_route = ref('');
+
+const $auth = inject('$auth');
+const router = useRouter();
+const route = useRoute();
+
+onMounted(() => {
+  if (route?.query?.route) {
+	redirect_route.value = route.query.route;
+	router.replace({ query: null });
+  }
+});
+
+const login = async () => {
+  if (email.value && password.value) {
+	const res = await $auth.login(email.value, password.value);
+	if (res) {
+	  router.push({ name: 'Home' });
+	}
+  }
+};
+</script>
+
+<template>
   <div class="min-h-screen bg-white flex">
 	<div class="mx-auto w-full max-w-sm lg:w-96">
 	  <form @submit.prevent="login" class="space-y-6">
@@ -57,33 +76,6 @@ LOGIN_VUE_BOILERPLATE = """<template>
 	</div>
   </div>
 </template>
-<script>
-export default {
-  data() {
-	return {
-	  email: null,
-	  password: null,
-	};
-  },
-  inject: ["$auth"],
-  async mounted() {
-	if (this.$route?.query?.route) {
-	  this.redirect_route = this.$route.query.route;
-	  this.$router.replace({ query: null });
-	}
-  },
-  methods: {
-	async login() {
-	  if (this.email && this.password) {
-		let res = await this.$auth.login(this.email, this.password);
-		if (res) {
-		  this.$router.push({ name: "Home" });
-		}
-	  }
-	},
-  },
-};
-</script>
 """
 
 VUE_VITE_CONFIG_BOILERPLATE = """import path from 'path';
@@ -107,7 +99,7 @@ export default defineConfig({
 	build: {
 		outDir: '../{{app}}/public/{{name}}',
 		emptyOutDir: true,
-		target: 'es2015',
+		target: 'es2020',
 	},
 });
 """
@@ -139,9 +131,20 @@ import Auth from "../../../doppio/libs/controllers/auth";
 const app = createApp(App);
 const auth = reactive(new Auth());
 
+// Define resources configuration for the ping endpoint
+const resourcesConfig = {
+	ping: {
+		method: "frappe.ping",
+		auto: false,
+		onSuccess(data) {
+			alert(data);
+		}
+	}
+};
+
 // Plugins
 app.use(router);
-app.use(resourceManager);
+app.use(resourceManager, resourcesConfig);
 
 // Global Properties,
 // components can inject this
@@ -150,7 +153,7 @@ app.provide("$call", call);
 app.provide("$socket", socket);
 
 
-// Configure route gaurds
+// Configure route guards
 router.beforeEach(async (to, from, next) => {
 	if (to.matched.some((record) => !record.meta.isLoginPage)) {
 		// this route requires auth, check if logged in
@@ -230,7 +233,7 @@ export default defineConfig({
 	build: {
 		outDir: '../{{app}}/public/{{name}}',
 		emptyOutDir: true,
-		target: 'es2015',
+		target: 'es2020',
 	},
 });
 """
@@ -397,4 +400,109 @@ class {{ pascal_cased_name }} {
 frappe.provide("frappe.ui");
 frappe.ui.{{ pascal_cased_name }} = {{ pascal_cased_name }};
 export default {{ pascal_cased_name }};
+"""
+
+# Pinia Store Boilerplate
+PINIA_STORE_BOILERPLATE = """import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+
+/**
+ * Example Pinia store using Composition API style
+ * Learn more: https://pinia.vuejs.org/
+ */
+export const useAppStore = defineStore('app', () => {
+	// State
+	const count = ref(0);
+	const user = ref(null);
+
+	// Getters (computed)
+	const doubleCount = computed(() => count.value * 2);
+	const isLoggedIn = computed(() => user.value !== null);
+
+	// Actions
+	function increment() {
+		count.value++;
+	}
+
+	function setUser(userData) {
+		user.value = userData;
+	}
+
+	function clearUser() {
+		user.value = null;
+	}
+
+	return {
+		// State
+		count,
+		user,
+		// Getters
+		doubleCount,
+		isLoggedIn,
+		// Actions
+		increment,
+		setUser,
+		clearUser
+	};
+});
+"""
+
+# Main.js with Pinia support
+MAIN_JS_WITH_PINIA_BOILERPLATE = """import { createApp, reactive } from "vue";
+import { createPinia } from 'pinia';
+import App from "./App.vue";
+
+import router from './router';
+import resourceManager from "../../../doppio/libs/resourceManager";
+import call from "../../../doppio/libs/controllers/call";
+import socket from "../../../doppio/libs/controllers/socket";
+import Auth from "../../../doppio/libs/controllers/auth";
+
+const app = createApp(App);
+const auth = reactive(new Auth());
+const pinia = createPinia();
+
+// Define resources configuration for the ping endpoint
+const resourcesConfig = {
+	ping: {
+		method: "frappe.ping",
+		auto: false,
+		onSuccess(data) {
+			alert(data);
+		}
+	}
+};
+
+// Plugins
+app.use(pinia);
+app.use(router);
+app.use(resourceManager, resourcesConfig);
+
+// Global Properties,
+// components can inject this
+app.provide("$auth", auth);
+app.provide("$call", call);
+app.provide("$socket", socket);
+
+
+// Configure route guards
+router.beforeEach(async (to, from, next) => {
+	if (to.matched.some((record) => !record.meta.isLoginPage)) {
+		// this route requires auth, check if logged in
+		// if not, redirect to login page.
+		if (!auth.isLoggedIn) {
+			next({ name: 'Login', query: { route: to.path } });
+		} else {
+			next();
+		}
+	} else {
+		if (auth.isLoggedIn) {
+			next({ name: 'Home' });
+		} else {
+			next();
+		}
+	}
+});
+
+app.mount("#app");
 """
